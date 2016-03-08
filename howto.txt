@@ -1,0 +1,27 @@
+-------------------
+ How to run sdoss?
+-------------------
+X.Bonnin, 03-MAR-2014
+
+Note: before running sdoss, make sure that SolarSoftware (SSW) with
+         the sdo, vso, and ontology packages is installed on your
+         system, and that the corresponding environment variables are
+         correctly set. (For more details about SSW, 
+	 visit http://www.lmsal.com/solarsoft/.)
+
+FROM IDL
+---------------
+
+    sdoss_processing.pro:	This is the main IDL routine to run
+                                sdoss. It is located
+                                in the /sdoss/src
+                                folder, and can be
+                                launched from an IDL
+                                interpreter
+                                session. (To have the
+                                list of input
+                                arguments, please read
+                                the file's header) 
+
+To use the SDOSS-HFC wrapper library, please read the readme.hfc.txt file in
+/sdoss/hfc directory.

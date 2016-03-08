@@ -1,0 +1,13 @@
+-----------------------
+ How to install sdoss?
+-----------------------
+X.Bonnin, 03-MAR-2014
+
+ To install sdoss, just copy the /sdoss root directory in your local machine.
+ IDL 7.1 or later must be installed on your system. Make sure that the SolarSoftWare (SSW) 
+ including the sdo, vso, and ontology packages are available, and that 
+ the corresponding environment variables (e.g. $SSW_ONTOLOGY) are correctly set.
+
+ To know how run the sdoss code, please read the howto.txt document. 
+
+ Note: Python 2.x compiler is required to run the sdoss_hfc_processing.py script.

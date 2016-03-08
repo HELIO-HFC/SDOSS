@@ -1,0 +1,7 @@
+SDOSS TodoList
+X.Bonnin, 16/10/2013
+
+* Take account of sunspots hierachy (i.e., parent, child)
+* Add event tracking (i.e., disappearence, appearance, splitting, etc.)
+* Some values of cc_x_pix et cc_y_pix parameters seems to be wrong. DONE
+* Check chain code and raster scan parameters. DONE

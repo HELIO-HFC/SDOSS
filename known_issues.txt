@@ -1,0 +1,5 @@
+* In some case read_sdo.pro can exit with an error since IDL calls its own uniq.pro function
+  instead of the SolarSoft uniq.pro function in line 150 of the fitshead2struct.pro. 
+  This latter function uses a /FIRST keyword that does not exist in the IDL function.
+
+X.Bonnin, 28-FEB-2014

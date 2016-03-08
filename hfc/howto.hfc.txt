@@ -1,0 +1,21 @@
+ SDOSS-HFC wrapper library
+ ===========================
+ X.Bonnin, 03-MAR-2014
+
+ There are two hfc directories :
+
+	/prod	production version
+
+	/devtest development and test version
+
+ Before running the SDOSS-HFC wrapper library,
+ please set up the required environment variables.
+ (Dedicated shell scripts can be found in the /prod
+ and /devtest directories.)
+
+ Configuration files providing input
+ parameters for SDOSS are stored in the /config
+ sub-directory.
+
+ Scripts are available in the /scripts sub-directory
+ to run the program. 
