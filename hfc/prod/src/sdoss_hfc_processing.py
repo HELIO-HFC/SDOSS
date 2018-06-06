@@ -21,12 +21,19 @@ except:
     sys.exit("Import failed in module sdoss_hfc_processing :\
               \n\tMyToolkit module is required!")
 
+try:
+    from jsoclib import jsoc
+except:
+    sys.exit("Import failed in module sdoss_hfc_processing :\
+              \n\tjsoclib module is required!")
+
+
 # Import sdoss hfc global variables
 try:
     from sdoss_hfc_globals import HOSTNAME, INPUT_TFORMAT, \
-        TODAY, PJOBS, SDOSS_IDL_BIN, LOG, \
+        TODAY, PJOBS, SDOSS_IDL_BIN, LOG, IDL_EXE_PATH, \
         STARTTIME, ENDTIME, CADENCE, HISTORY_FILE,\
-        OUTPUT_DIRECTORY, DATA_DIRECTORY, JSOC_URL
+        OUTPUT_DIRECTORY, DATA_DIRECTORY, JSOC_URL, VSO_URL, JSOC_TFORMAT
 except:
     sys.exit("Import failed in module sdoss_hfc_processing :\
              \n\tsdoss_hfc_globals module is required!")
@@ -115,7 +122,7 @@ def main():
              HOSTNAME, TODAY.strftime(INPUT_TFORMAT))
 
     if not (os.path.isfile(config_file)):
-        LOG.error("%s does not exist!", config_file)
+        LOG.error("Cinfig file %s does not exist!", config_file)
 
     # Check SSW_ONTOLOGY environment variable existence
     if not ("SSW_ONTOLOGY" in os.environ):
@@ -212,7 +219,7 @@ def main():
             running.append(current_job)
             npending -= 1
             LOG.info("Job [#%i] has started. (%s)",
-                     current_job.job_id, str(datetime.today()))
+                     current_job.thread_id, str(datetime.today()))
             LOG.info("Current running/pending job(s): %i/%i",
                      len(running), npending)
             time.sleep(3)
@@ -230,7 +237,7 @@ def main():
                 else:
                     LOG.error("Sdoss Job [#%i] has \
                               failed for date/time %s! (%s)",
-                              running[i].job_id, str(running[i].date_obs[0]),
+                              running[i].thread_id, str(running[i].date_obs[0]),
                               str(datetime.today()))
                 running.remove(running[i])
             i = (i + 1) % pjobs
@@ -260,8 +267,8 @@ def query_jsoc(ds, starttime, endtime, cadence=None):
     # Define starttime and endtime (in jsoc cgi time format)
     stime = starttime - timedelta(seconds=20)  #starttime - 20 sec.
     etime = endtime + timedelta(seconds=20)  #endtime + 20 sec.
-    stime = stime.strftime(JSOC_TIMEFORMAT)
-    etime = etime.strftime(JSOC_TIMEFORMAT)
+    stime = stime.strftime(JSOC_TFORMAT)
+    etime = etime.strftime(JSOC_TFORMAT)
 
     # Load date set information from jsoc
 
@@ -279,7 +286,7 @@ def query_jsoc(ds, starttime, endtime, cadence=None):
         if (row):
             rs = row.split()
             T_REC_index.append(rs[0])
-            T_REC.append(datetime.strptime(rs[1],JSOC_TIMEFORMAT+"_TAI"))
+            T_REC.append(datetime.strptime(rs[1],JSOC_TFORMAT+"_TAI"))
 
     return T_REC_index, T_REC
 
@@ -307,7 +314,8 @@ def find_closest(input_datetime,ref_datetime,dt_max=-1):
 # Module to generate the url of data set in vso server.
 def get_vso_url(ds,t_rec_index,rice=True):
 
-    url = VSO_URL + "/cgi-bin/drms_test/drms_export.cgi?series="+ds
+    #url = VSO_URL + "/cgi-bin/drms_test/drms_export.cgi?series="+ds
+    url = VSO_URL + "/cgi-bin/netdrms/drms_export.cgi?series="+ds
     if (rice): url+=";compress=rice"
 
     urlList=[]
@@ -321,7 +329,7 @@ def get_vso_url(ds,t_rec_index,rice=True):
 def check_history(history_file,urlList):
 
     if not (os.path.isfile(history_file)):
-        LOG.warning(history_file+" does not exist!")
+        LOG.warning("history file "+history_file+" does not exist!")
         return []
 
     # Read checklist file
@@ -411,19 +419,27 @@ class run_sdoss(threading.Thread):
             (self.fileset[0].startswith("ftp:")):
             ic_url = self.fileset[0]
             self.fileid[0] = ic_url
-            LOG.info("Downloading %s...",ic_url)
-            ic_file = download_file(ic_url,
-            			    target_directory=self.data_directory,
-				            timeout=60,wait=30,quiet=True)
+            #try to download from jsoc
+            LOG.info("Job[#%i] downloading ic_file from JSOC  %s", self.thread_id, self.date_obs[0])
+            j_soc = jsoc("hmi.ic_45s", starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
+            ic_file=j_soc.get_fits(output_dir=self.data_directory)
             if (ic_file):
-                LOG.info(ic_file+" downloaded.")
+                LOG.info("Job[#%i]: %s downloaded from JSOC.", self.thread_id, ic_file)
                 self.fileset[0] = ic_file
+            else:
+                LOG.info("Job[#%i]: Downloading from VSO for %s %s...", self.thread_id, self.date_obs[0], ic_url)
+                ic_file = download_file(ic_url,
+                                    target_directory=self.data_directory,
+                                            timeout=60,wait=30,quiet=False)
+                if (ic_file):
+                    LOG.info("Job[#%i]: %s downloaded from VSO.", self.thread_id, ic_file)
+                    self.fileset[0] = ic_file
         else:
             ic_url = None
             ic_file = self.fileset[0]
             self.fileid[0] = ic_file
         if not (os.path.isfile(ic_file)):
-            LOG.error(ic_file+" does not exist!")
+            LOG.error("Job[#%i]: ic_file %s does not exist!", self.thread_id, ic_file)
             self.end()
             return False
 
@@ -431,19 +447,27 @@ class run_sdoss(threading.Thread):
             (self.fileset[1].startswith("ftp:")):
             m_url = self.fileset[1]
             self.fileid[1] = m_url
-            LOG.info("Downloading %s...",m_url)
-            m_file = download_file(m_url,
-                         target_directory=self.data_directory,
-			             timeout=60,wait=30,quiet=True)
+            #try to download from jsoc
+            LOG.info("Job[#%i] downloading m_file from JSOC  %s", self.thread_id, self.date_obs[0])
+            j_soc = jsoc("hmi.m_45s", starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
+            m_file=j_soc.get_fits(output_dir=self.data_directory)
             if (m_file):
-                LOG.info(m_file+" downloaded.")
+                LOG.info("Job[#%i]: %s downloaded from JSOC.", self.thread_id, m_file)
                 self.fileset[1] = m_file
+            else:
+                LOG.info("Job[#%i]: Downloading from VSO for %s %s...", self.thread_id, self.date_obs[0], m_url)
+                m_file = download_file(m_url,
+                         target_directory=self.data_directory,
+                                     timeout=60,wait=30,quiet=False)
+                if (m_file):
+                    LOG.info("Job[#%i]: %s downloaded from VSO.", self.thread_id, m_file)
+                    self.fileset[1] = m_file
         else:
             m_url = None
             m_file = self.fileList[1]
             self.fileid[1] = m_file
         if not (os.path.isfile(m_file)):
-            LOG.error(m_file+" does not exist!")
+            LOG.error("Job[#%i]: m_file %s does not exist!", self.thread_id, m_file)
             self.end()
             return False
 
@@ -458,6 +482,7 @@ class run_sdoss(threading.Thread):
 
         #build idl command line
         idl_cmd = [self.idl_exe_path]+["-quiet","-rt="+self.sdoss_idl_bin,"-args"]
+        #idl_cmd = [self.idl_exe_path]+["-rt="+self.sdoss_idl_bin,"-args"]
         idl_cmd.extend(idl_args)
 
         LOG.info("Executing --> "+ " ".join(idl_cmd))

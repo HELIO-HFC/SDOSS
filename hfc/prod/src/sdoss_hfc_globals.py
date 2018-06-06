@@ -32,10 +32,12 @@ IDL_EXE_PATH = "/usr/local/bin/idl"
 JSOC_URL = "http://jsoc.stanford.edu/cgi-bin/ajax/show_info"
 
 # VSO server url
-VSO_URL = "http://vso2.tuc.noao.edu"
+#VSO_URL = "http://vso2.tuc.noao.edu"
+VSO_URL = "http://netdrms01.nispdc.nso.edu"
 
 # HFC ftp server url for tracking
-FTP_URL = "ftp://ftpbass2000.obspm.fr/pub/helio/sdoss"
+#FTP_URL = "ftp://ftpbass2000.obspm.fr/pub/helio/sdoss"
+FTP_URL = "ftp://ftpbass2000.obspm.fr/pub/helio/hfc/obsparis/frc/sdoss/results"
 
 # Path definition
 CURRENT_PATH = os.getcwd()

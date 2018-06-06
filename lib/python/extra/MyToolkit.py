@@ -9,6 +9,7 @@ X.Bonnin (LESIA, CNRS), 11-JUL-2013
 import os
 import sys
 import urllib2
+import socket
 import time
 import cStringIO
 import csv
@@ -178,8 +179,17 @@ def download_file(url,
     for i in range(tries):
         try:
             connect = urllib2.urlopen(url,None,timeout)
+        except urllib2.HTTPError as e:
+            print 'The server couldn\'t fulfill the request.'
+            print 'Error code: ', e.code
+            time.sleep(wait)
+            continue
         except urllib2.URLError,e:
             if not (quiet): print "Can not reach %s: %s [%s]" % (url,e,tries-i)
+            time.sleep(wait)
+            continue
+        except socket.timeout, e:
+            if not (quiet): print "Timeout %s: %s [%s]" % (url,e,tries-i)
             time.sleep(wait)
             continue
         else:
@@ -206,6 +216,7 @@ def download_file(url,
                     break
                 else:
                     fw.close()
+                    break
             else:
                 if not (quiet): print "%s already exists" % (target)
                 break
@@ -217,4 +228,3 @@ def add_quote(string,double=False):
         return "\"" + string + "\""
     else:
         return "\'" + string + "\'"
-
