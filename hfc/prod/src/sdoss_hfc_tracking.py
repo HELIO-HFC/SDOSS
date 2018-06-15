@@ -215,8 +215,7 @@ def get_trackfile(fileset, target_directory):
 
     return trackset
 
-
-def load_trackid(trackset, feat_data):
+def load_trackid(trackset, feat_data, max_track_id):
 
     """
     Load track ids from list of
@@ -237,7 +236,8 @@ def load_trackid(trackset, feat_data):
             tid.append(np.int64(td['TRACK_ID']))
     if (len(tid) == 0):
         return []
-    max_tid = np.max(tid)
+    #max_tid = np.max(tid)
+    max_tid = np.max([max_track_id, np.max(tid)])
 
     track_id = []
     count = 1
@@ -319,6 +319,7 @@ if (__name__ == "__main__"):
 
     fileset = get_filelist(starttime, endtime,
                            data_directory=data_directory)
+    
     nfile = len(fileset)
     LOG.info("%i files found", nfile)
     if (nfile == 0):
@@ -329,7 +330,8 @@ if (__name__ == "__main__"):
     if not (restart):
         trackset = get_trackfile(fileset, output_directory)
     else:
-        trackset = []
+        trackset = []        
+    max_track_id = 0    
     if (len(trackset) == 0):
         LOG.warning("No previous track files read!")
 
@@ -344,7 +346,7 @@ if (__name__ == "__main__"):
                 + "_track.csv")
             for current_file in current_fileset]
 
-        prev_track_id = load_trackid(current_trackset, feat_data_i)
+        prev_track_id = load_trackid(current_trackset, feat_data_i, max_track_id)
 
         LOG.info("Run tracking for fileset [%i]:", nfile - max_files - i + 1)
         LOG.info("[" + ", ".join(current_fileset) + "]")
@@ -357,7 +359,10 @@ if (__name__ == "__main__"):
             feat_data_i['FEAT_AREA_DEG2'],
             radius=radius, dt_max=dt_max,
             area_min=area_min, track_id=prev_track_id)
-
+        LOG.info("track_id %s", track_id)
+        # keep in memory the max of track_id numbers
+        max_track_id = np.max([np.max(track_id), max_track_id])
+        LOG.info("max_track_id %i", max_track_id)
         for j, current_file in enumerate(current_fileset):
             ind = indices(feat_data_i['FEAT_FILENAME'], current_file)
             output_data = []
