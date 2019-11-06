@@ -131,8 +131,19 @@ def main():
 
     # Get list of HMI Ic T_REC_index and T_REC
     # to process between starttime and endtime
-    ds = "hmi.ic_45s"
-    ic_index, ic_dates = query_jsoc(ds, starttime, endtime, cadence=cadence)
+    #ds = "hmi.ic_45s"
+    #ic_index, ic_dates = query_jsoc(ds, starttime, endtime, cadence=cadence)
+    ds = "hmi.Ic_45s_nrt"
+    jsocLink = jsoc(ds, realtime=True, starttime=starttime,
+                endtime=endtime, cadence=cadence,
+                verbose=verbose, notify='christian.renie@obspm.fr')
+    info = jsocLink.show_info(key=["T_REC_index", "T_REC"])
+    ic_index=[] ; ic_dates=[]
+    for row in info.split("\n")[1:-1]:
+        if (row):
+            rs = row.split()
+            ic_index.append(rs[0])
+            ic_dates.append(datetime.strptime(rs[1],JSOC_TFORMAT+"_TAI"))
     if (len(ic_index) == 0):
         LOG.warning("Empty hmi file set!")
         sys.exit(1)
@@ -421,7 +432,8 @@ class run_sdoss(threading.Thread):
             self.fileid[0] = ic_url
             #try to download from jsoc
             LOG.info("Job[#%i] downloading ic_file from JSOC  %s", self.thread_id, self.date_obs[0])
-            j_soc = jsoc("hmi.ic_45s", starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
+          #  j_soc = jsoc("hmi.ic_45s", starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
+            j_soc = jsoc("hmi.Ic_45s_nrt", realtime=True, starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
             ic_file=j_soc.get_fits(output_dir=self.data_directory)
             if (ic_file):
                 LOG.info("Job[#%i]: %s downloaded from JSOC.", self.thread_id, ic_file)
@@ -449,7 +461,8 @@ class run_sdoss(threading.Thread):
             self.fileid[1] = m_url
             #try to download from jsoc
             LOG.info("Job[#%i] downloading m_file from JSOC  %s", self.thread_id, self.date_obs[0])
-            j_soc = jsoc("hmi.m_45s", starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
+        #    j_soc = jsoc("hmi.m_45s", starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
+            j_soc = jsoc("hmi.M_45s_nrt", realtime=True, starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
             m_file=j_soc.get_fits(output_dir=self.data_directory)
             if (m_file):
                 LOG.info("Job[#%i]: %s downloaded from JSOC.", self.thread_id, m_file)

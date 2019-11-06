@@ -169,11 +169,26 @@ def download_file(url,
                   tries=3,wait=3,
                   timeout=None,
                   quiet=False,
-                  get_stream=False):
+                  get_stream=False,
+                  user=None,
+                  passwd=None):
 
     """
     Method to download a file.
     """
+    if user is not None and passwd is not None:
+        passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        # this creates a password manager
+        passman.add_password(None, url, user, passwd)
+        # because we have put None at the start it will always
+        # use this username/password combination for  urls
+        # for which `url` is a super-url
+
+        authhandler = urllib2.HTTPBasicAuthHandler(passman)
+        # create the AuthHandler
+
+        opener = urllib2.build_opener(authhandler)
+        urllib2.install_opener(opener)
 	
     target = ""
     for i in range(tries):

@@ -34,7 +34,10 @@ __date__ = "21-FEB-2014"
 # Global variables
 
 # Path and URL definitions
+JSOC_MAINURL = "http://jsoc.stanford.edu"
+JSOC2_MAINURL = "http://jsoc2.stanford.edu"
 JSOC_URL = "http://jsoc.stanford.edu/cgi-bin/ajax/"
+JSOC2_URL = "http://jsoc2.stanford.edu/cgi-bin/ajax/"
 CURRENT_DIR = os.getcwd()
 
 # Time
@@ -60,12 +63,13 @@ WAIT = 10
 
 class jsoc():
 
-    def __init__(self, dataseries, near_date=NEAR_DATE,
+    def __init__(self, dataseries, realtime=False, near_date=NEAR_DATE,
                  starttime=None, endtime=None,
                  cadence=None, span_duration=None,
                  verbose=False,notify=None):
 
         self.ds = dataseries
+        self.realtime = realtime
         self.tr = ""
         self.near_date = near_date
         self.starttime = starttime
@@ -120,7 +124,10 @@ class jsoc():
 
     def build_show_info(self, key=None):
 
-        url = JSOC_URL + "show_info?ds=%s" % (self.ds)
+        if self.realtime:
+            url = JSOC2_URL + "show_info?ds=%s" % (self.ds)
+        else:
+            url = JSOC_URL + "show_info?ds=%s" % (self.ds)
         if (len(self.tr) >= 0):
             url += self.tr
         if (key is not None):
@@ -137,7 +144,11 @@ class jsoc():
         if (output_dir is None): 
             get_stream = True
         if (self.verbose): print "Fetching %s" % (url)
-        target = download_file(url, target_directory=output_dir,
+        if self.realtime:
+            target = download_file(url, target_directory=output_dir,
+                               get_stream=get_stream, user='hmiteam', passwd='hmiteam')
+        else:
+            target = download_file(url, target_directory=output_dir,
                                get_stream=get_stream)
         return target
 
@@ -145,7 +156,12 @@ class jsoc():
     def build_fetch(self, operation,
                     protocol=None, method=None,
                     requestid=None, format=None):
-        url = JSOC_URL + "jsoc_fetch?op=%s" % (operation)
+
+        if self.realtime:
+            url = JSOC2_URL + "jsoc_fetch?op=%s" % (operation)
+        else:
+            url = JSOC_URL + "jsoc_fetch?op=%s" % (operation)
+
 
         if (operation == "exp_status") and (requestid is not None):
             url += "&requestid=%s" % (requestid)
@@ -171,7 +187,10 @@ class jsoc():
                                requestid=requestid,
                                format=format)
         if (self.verbose): print "Fetching %s" % (url)
-        resp = download_file(url, get_stream=True)
+        if self.realtime:
+            resp = download_file(url, get_stream=True, user='hmiteam', passwd='hmiteam')
+        else:
+            resp = download_file(url, get_stream=True)
         if not (resp.startswith("{")):
             print "Empty jsoc_fetch response!"
             print "Query was: %s" % (url)
@@ -196,9 +215,15 @@ class jsoc():
             filename = filename.replace('}', '')
 #            filename = filename.replace(':', '_')
             filename = filename+'.fits'
-            download_url = 'http://jsoc.stanford.edu'+data['filename']
+            if self.realtime:
+                download_url = 'http://jsoc2.stanford.edu'+data['filename']
+                res = download_file(download_url, target_directory=output_dir, filename=filename, user='hmiteam', passwd='hmiteam')
+            else:
+                download_url = 'http://jsoc.stanford.edu'+data['filename']
+                res = download_file(download_url, target_directory=output_dir, filename=filename)
+
             if (self.verbose): print "Downloading %s to %s ..." % (download_url, output_dir+filename)
-            res = download_file(download_url, target_directory=output_dir, filename=filename)
+
         else:      
             try:
                 requestid = fetch_resp['requestid']
@@ -235,9 +260,14 @@ class jsoc():
                         filename = filename.replace('[', '.')
                         tmp = data['filename'].split('.')
                         filename = filename+'.'+tmp[3]+'.fits'
-                        download_url = 'http://jsoc.stanford.edu'+fetch_resp['dir']+'/'+data['filename']
+                        if self.realtime:
+                            download_url = 'http://jsoc2.stanford.edu'+fetch_resp['dir']+'/'+data['filename']
+                            res = download_file(download_url, target_directory=output_dir, filename=filename, user='hmiteam', passwd='hmiteam')
+                        else:
+                            download_url = 'http://jsoc.stanford.edu'+fetch_resp['dir']+'/'+data['filename']
+                            res = download_file(download_url, target_directory=output_dir, filename=filename)
                         if (self.verbose): print "Downloading %s to %s ..." % (download_url, output_dir+filename)
-                        res = download_file(download_url, target_directory=output_dir, filename=filename)
+
                     else:
                         res = ''
                     break
@@ -251,6 +281,7 @@ if (__name__ == "__main__"):
     parser = argparse.ArgumentParser(description="Script to query the JSOC AJAX server.",
                                      add_help=True, conflict_handler='resolve')
     parser.add_argument('dataseries', nargs=1, help="JSOC dataseries")
+    parser.add_argument('-nrt', '--realtime', nargs='?', help="Use real time server jsoc2")
     parser.add_argument('-n', '--near_date', nargs='?', 
                         default=NEAR_DATE, help="Date and time")
     parser.add_argument('-s', '--starttime', nargs='?', 
@@ -272,6 +303,7 @@ if (__name__ == "__main__"):
 
     args = parser.parse_args()
     ds = args.dataseries[0]
+    realtime = args.realtime
     near_date = datetime.strptime(args.near_date, INPUT_TIMEFORMAT)
     starttime = args.starttime
     endtime = args.endtime
@@ -286,16 +318,22 @@ if (__name__ == "__main__"):
     if (endtime is not None): endtime = datetime.strptime(endtime, INPUT_TIMEFORMAT)
 
 
-    jsoc = jsoc(ds, near_date=near_date, starttime=starttime,
+    jsoc = jsoc(ds, realtime=True, near_date=near_date, starttime=starttime,
                 endtime=endtime, cadence=cadence,
                 span_duration=span_duration,
-                verbose=verbose, notify=notify)
+                verbose=verbose, notify='christian.renie@obspm.fr')
 
     if (args.SHOW_INFO):
-        key = ["T_REC_index", "T_REC"]
-        print jsoc.show_info(key=key, output_dir=output_dir)
+        info = jsoc.show_info(key=["T_REC_index", "T_REC"])
+        ic_index=[] ; ic_dates=[]
+        for row in info.split("\n")[1:-1]:
+            if (row):
+                rs = row.split()
+                ic_index.append(rs[0])
+                ic_dates.append(datetime.strptime(rs[1],'%Y.%m.%d_%H:%M:%S'+"_TAI"))
+        print ic_index, ic_dates
     else:
-        target=jsoc.get_fits(output_dir=output_dir)
+        target=jsoc.get_fits(output_dir='.')
         if (target):
             print "%s downloaded" % target
         else:
