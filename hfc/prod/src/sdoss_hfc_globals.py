@@ -25,7 +25,10 @@ global HOSTNAME, IDL_EXE_PATH, \
 HOSTNAME = socket.gethostname()
 
 # IDL application local path
-IDL_EXE_PATH = "/usr/local/bin/idl"
+IDL_EXE_PATH = "idl"
+#IDL_EXE_PATH = "/shared/apps/exelis/idl/bin/bin.linux.x86_64/idl"
+#IDL_EXE_PATH = "/shared/apps/harris/idl87/bin/idl"
+#IDL_EXE_PATH = "/usr/local/bin/idl"
 #IDL_EXE_PATH = "/Applications/exelis/idl/bin/idl"
 
 # jsoc/cgi server url of show_info function

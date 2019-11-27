@@ -21,8 +21,8 @@ LOG_FILE="/poubelle/helio/hfc/frc/sdoss/logs/sdoss_hfc_tck$SLURM_JOB_ID.prod.out
 #Input arguments
 STARTTIME=`date '+%Y-%m-%dT%H:%M:%S' --date "2 months ago"`
 #ENDTIME=`date '+%Y-%m-%dT%H:%M:%S' --date "2 days ago"`
-#STARTTIME=2016-12-20T00:00:00
-#ENDTIME=2017-10-10T23:59:59
+#STARTTIME=2018-05-09T00:00:00
+#ENDTIME=2018-05-22T23:59:59
 ENDTIME=`date '+%Y-%m-%dT%H:%M:%S' --date "1 days ago"`
 
 HISTORY_FILE=$OUTPUT_DIR/sdoss_hfc_tck.prod.history

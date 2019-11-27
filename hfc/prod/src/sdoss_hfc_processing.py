@@ -122,7 +122,7 @@ def main():
              HOSTNAME, TODAY.strftime(INPUT_TFORMAT))
 
     if not (os.path.isfile(config_file)):
-        LOG.error("Cinfig file %s does not exist!", config_file)
+        LOG.error("Config file %s does not exist!", config_file)
 
     # Check SSW_ONTOLOGY environment variable existence
     if not ("SSW_ONTOLOGY" in os.environ):
@@ -410,10 +410,10 @@ class run_sdoss(threading.Thread):
 
     def run(self):
 
-        if not (os.path.exists(self.idl_exe_path)):
-            LOG.error("Given path of the IDL executable (%s) does not exist!",self.idl_exe_path)
-            self.end()
-            return False
+#        if not (os.path.exists(self.idl_exe_path)):
+#            LOG.error("Given path of the IDL executable (%s) does not exist!",self.idl_exe_path)
+#            self.end()
+#            return False
 
         if not (os.path.exists(self.sdoss_idl_bin)):
             LOG.error("%s does not exist!",self.sdoss_idl_bin)
@@ -432,7 +432,7 @@ class run_sdoss(threading.Thread):
             self.fileid[0] = ic_url
             #try to download from jsoc
             LOG.info("Job[#%i] downloading ic_file from JSOC  %s", self.thread_id, self.date_obs[0])
-          #  j_soc = jsoc("hmi.ic_45s", starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
+#            j_soc = jsoc("hmi.ic_45s", starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
             j_soc = jsoc("hmi.Ic_45s_nrt", realtime=True, starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
             ic_file=j_soc.get_fits(output_dir=self.data_directory)
             if (ic_file):
@@ -461,7 +461,7 @@ class run_sdoss(threading.Thread):
             self.fileid[1] = m_url
             #try to download from jsoc
             LOG.info("Job[#%i] downloading m_file from JSOC  %s", self.thread_id, self.date_obs[0])
-        #    j_soc = jsoc("hmi.m_45s", starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
+#            j_soc = jsoc("hmi.m_45s", starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
             j_soc = jsoc("hmi.M_45s_nrt", realtime=True, starttime=self.date_obs[0], endtime=self.date_obs[0], verbose=True, notify='christian.renie@obspm.fr')
             m_file=j_soc.get_fits(output_dir=self.data_directory)
             if (m_file):
