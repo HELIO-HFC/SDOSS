@@ -203,7 +203,7 @@ def main():
     #Initialize sdoss jobs for the unprocessed files
     sdoss_jobs = []
     for i, current_url in enumerate(ic_url):
-        LOG.info("Initializing job [#%i] for date/time %s", i, str(ic_dates[i]))
+        #LOG.info("Initializing job [#%i] for date/time %s", i, str(ic_dates[i]))
         sdoss_jobs.append(run_sdoss(
                           i + 1, [current_url, m_url[i]],
                           config_file,
@@ -497,20 +497,19 @@ class run_sdoss(threading.Thread):
         idl_cmd = [self.idl_exe_path]+["-quiet","-rt="+self.sdoss_idl_bin,"-args"]
         #idl_cmd = [self.idl_exe_path]+["-rt="+self.sdoss_idl_bin,"-args"]
         idl_cmd.extend(idl_args)
-
-        LOG.info("Executing --> "+ " ".join(idl_cmd))
-        idl_process = subprocess.Popen(idl_cmd,
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE)
-        output, errors = idl_process.communicate()
-        if idl_process.wait() == 0:
-            #LOG.info("Sucessfully ran idl command %s, output: %s, errors: %s",
-            #       ' '.join(idl_cmd), str(output), str(errors))
-            if (len(errors) == 0): self.success=True
-        else:
-            LOG.error("Error running idl command %s, output: %s, errors: %s",
-                   ' '.join(idl_cmd), str(output), str(errors))
-
+        try:
+            LOG.info("Executing --> "+ " ".join(idl_cmd))
+            idl_process = subprocess.Popen(idl_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output, errors = idl_process.communicate()
+            if idl_process.wait() == 0:
+                #LOG.info("Sucessfully ran idl command %s, output: %s, errors: %s",
+                #       ' '.join(idl_cmd), str(output), str(errors))
+                if (len(errors) == 0): self.success=True
+            else:
+                LOG.error("Error running idl command %s, output: %s, errors: %s",
+                       ' '.join(idl_cmd), str(output), str(errors))
+        except OSError as e:
+            LOG.error(str(e))
         self.end()
         time.sleep(3)
 

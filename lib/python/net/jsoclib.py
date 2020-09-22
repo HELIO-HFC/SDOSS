@@ -53,7 +53,7 @@ SPAN_DURATION = 3600
 # Retrieving method
 METHOD = "url"
 #Time out in sec.
-TIMEOUT = 60
+TIMEOUT = 120
 # OUTPUT JSOC SERVER RESPONSE FORMAT
 FORMAT = "json"
 # Protocol
@@ -108,18 +108,12 @@ class jsoc():
         if (self.tr.startswith("[")): self.tr += "]"
 
     def parse_json(self, resp):
-#        fetch_resp = {}
-#        items = resp[1:-1].split(",")
-#       for item in items:
- #           it = item.split(":")
-#            if (len(it) != 2): 
- #               print "Error in jsoc_fetch response!"
-#                print "Query was: %s" % (self.url)
-#                print "Returned response: %s" % (resp)
- #               return None
-#            fetch_resp[it[0][1:-1]] = "".join(it[1].split("\""))
- #       return fetch_resp
-         return json.loads(resp)
+        try:
+            json_object = json.loads(resp)
+        except ValueError as e:
+            if (self.verbose): print "Error %s %s" % (e, resp)
+            return None
+        return json_object
 
 
     def build_show_info(self, key=None):
@@ -186,7 +180,7 @@ class jsoc():
                                method=method,
                                requestid=requestid,
                                format=format)
-        if (self.verbose): print "Fetching %s" % (url)
+        print "Fetching %s" % (url)
         if self.realtime:
             resp = download_file(url, get_stream=True, user='hmiteam', passwd='hmiteam')
         else:
@@ -230,14 +224,15 @@ class jsoc():
             except KeyError:
                 print "Error: no JSOC request ID: %s" % (self.fetch_resp)
                 return ''
-            time.sleep(1)
+            
             t0 = time.time();
             remaining_sec = timeout - int(time.time() - t0)
+            time.sleep(3)
             while (remaining_sec >= 0):                
                 fetch_resp = self.fetch("exp_status", requestid=requestid, format=FORMAT)
                 if (self.verbose): print "%s    (remaining time: %i sec.)" % (self.fetch_resp, remaining_sec)                
                 if (fetch_resp is None): 
-                    print "Fetching error!"
+                    print "Fetching status error!"
                     res = ''
                     break
                 try:
@@ -273,10 +268,11 @@ class jsoc():
                     break
                 else:
                     print "Status: %i for %s" % (status, requestid)
-                time.sleep(wait)
+                time.sleep(WAIT)
                 remaining_sec = remaining_sec = timeout - int(time.time() - t0)
             return res
 
+# python jsoclib.py hmi.Ic_45s_nrt -nrt -s 2020-09-06T00:00:01 -e 2020-09-06T06:00:00 -c 7200  -V -S
 if (__name__ == "__main__"):
     parser = argparse.ArgumentParser(description="Script to query the JSOC AJAX server.",
                                      add_help=True, conflict_handler='resolve')
